@@ -4,17 +4,33 @@ Cabal-Version:	>= 1.6
 Author:		Daniel Vigovszky <daniel.vigovszky@gmail.com>
 Maintainer:	Daniel Vigovszky <daniel.vigovszky@gmail.com>
 Category:	File Management
-Synopsys:	Extensible file manager and scripting framework
+Synopsis:	Extensible file manager and scripting framework
 Description:	Extensible dual panel file manager and scripting framework with multiple frontends.
 Stability:	Experimental
 License:	GPL
 Build-Type:	Simple
 
-Executable lehel-cmd
-    Main-Is: CommandLineMain.lhs
-    Build-Depends:	
+Library
+    Exposed-modules: 
+        Lehel.Core.Actions
+        Lehel.Core.Eval
+        Lehel.Core.Frontend
+        Lehel.Core.REPL
+    Other-modules:
+        Paths_Lehel
+    Build-Depends:
         base,
         plugins,
-        readline
+        readline,
+        directory
+
+Executable lehel-cmd
+    Main-Is: CommandLineMain.lhs
+    Build-Depends:
+        base
+    ghc-options -Wall -O2 -dynamic
+
+
+
 
 		

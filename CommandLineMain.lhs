@@ -1,10 +1,30 @@
 This module contains the main function of the command line frontend version.
 
-It is currently only for testing the source control system and the build environment:
-
 > module Main
 > where
 
+We import the Core's appropriate modules:
+
+> import Lehel.Core.REPL
+> import Lehel.Core.Actions
+> import Lehel.Core.Frontend
+
+The following type has no meaning yet, it is only here 
+to be able to create an instance of FrontEnd
+
+> data FrontEndState = FES
+
+The FrontEnd interface implementation, very simple yet:
+
+> instance FrontEnd FrontEndState where
+>     showResult _ ExitRequest = putStrLn $ "Exit request"
+>     showResult _  (Error str) = putStrLn $ "!!! ERROR: " ++ str
+
+And a constructor function for the front end state:
+
+> createFrontEnd = return $ FES
+
 > main :: IO ()
-> main = putStrLn "Lehel"
+> main = do frontend <- createFrontEnd
+>           lehelREPL frontend
 
