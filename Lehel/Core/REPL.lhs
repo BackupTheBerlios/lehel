@@ -24,7 +24,7 @@ The main loop of the command interpreter part is the lehelREPL function:
 >                         case maybeLine of
 >                             Nothing -> return ()
 >                             Just line -> do addHistory line
->                                             result <- eval line                                           
+>                                             result <- eval line         
 >                                             case result of
 >                                                 ExitRequest -> return ()
 >                                                 _ -> do showResult frontend result

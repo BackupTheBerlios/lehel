@@ -22,7 +22,8 @@ Library
         base,
         plugins,
         readline,
-        directory
+        directory,
+        random
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

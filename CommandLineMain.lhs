@@ -17,8 +17,10 @@ to be able to create an instance of FrontEnd
 The FrontEnd interface implementation, very simple yet:
 
 > instance FrontEnd FrontEndState where
+>     showResult _ InvalidCall = putStrLn "!!! invalid call"
 >     showResult _ ExitRequest = putStrLn $ "Exit request"
->     showResult _  (Error str) = putStrLn $ "!!! ERROR: " ++ str
+>     showResult _ (Error str) = putStrLn $ "!!! ERROR: " ++ str
+>     showResult _ (ResultString str) = putStrLn str
 
 And a constructor function for the front end state:
 
