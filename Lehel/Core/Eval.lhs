@@ -24,7 +24,7 @@ The eval function evaluates single actions:
 
 > eval :: String -> IO (ActionResult)
 > eval input = do ifacePath <- getLibDir
->                 evalResult <- E.unsafeEval_ input ["Lehel.Core.Actions"] ["-package Lehel", "-dynamic"] [] [ifacePath]
+>                 evalResult <- E.unsafeEval_ input ["Lehel.Core.Actions"] ["-package Lehel"] [] [ifacePath]
 >                 case evalResult of
 >                   Left msgs -> return $ Error $ concatMap ((++) "\n") msgs
 >                   Right action -> action
