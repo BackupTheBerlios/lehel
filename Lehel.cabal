@@ -19,7 +19,7 @@ Library
     Other-modules:
         Paths_Lehel
     Build-Depends:
-        base,
+        base >= 4.0,
         plugins,
         readline,
         directory,
