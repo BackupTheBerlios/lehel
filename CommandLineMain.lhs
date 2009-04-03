@@ -3,11 +3,16 @@ This module contains the main function of the command line frontend version.
 > module Main
 > where
 
+We'll have to initialize our state:
+
+> import Control.Monad.State
+
 We import the Core's appropriate modules:
 
 > import Lehel.Core.REPL
 > import Lehel.Core.Actions
 > import Lehel.Core.Frontend
+> import Lehel.Core.State
 
 The following type has no meaning yet, it is only here 
 to be able to create an instance of FrontEnd
@@ -27,6 +32,7 @@ And a constructor function for the front end state:
 > createFrontEnd = return $ FES
 
 > main :: IO ()
-> main = do frontend <- createFrontEnd
->           lehelREPL frontend
+> main = do frontend <- createFrontEnd        
+>           st <- initialState
+>           evalStateT (lehelREPL frontend) st
 

@@ -16,6 +16,7 @@ Library
         Lehel.Core.Eval
         Lehel.Core.Frontend
         Lehel.Core.REPL
+        Lehel.Core.State
     Other-modules:
         Paths_Lehel
     Build-Depends:
@@ -23,7 +24,8 @@ Library
         plugins,
         readline,
         directory,
-        random
+        random,
+        mtl
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

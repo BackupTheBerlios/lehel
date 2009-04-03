@@ -17,15 +17,23 @@ Eval module is used to evaluate the input.
 > import Lehel.Core.Frontend
 > import Lehel.Core.Actions
 
+The whole REPL runs in Lehel's state monad:
+
+> import Lehel.Core.State
+
+and we'll also use lifTIO:
+
+> import Control.Monad.Trans (liftIO)
+
 The main loop of the command interpreter part is the lehelREPL function:
 
-> lehelREPL :: (FrontEnd f) => f -> IO ()
-> lehelREPL frontend = do maybeLine <- readline "> "
+> lehelREPL :: (FrontEnd f) => f -> LehelStateWithIO ()
+> lehelREPL frontend = do maybeLine <- liftIO $ readline "> "
 >                         case maybeLine of
 >                             Nothing -> return ()
->                             Just line -> do addHistory line
+>                             Just line -> do liftIO $ addHistory line
 >                                             result <- eval line         
 >                                             case result of
 >                                                 ExitRequest -> return ()
->                                                 _ -> do showResult frontend result
+>                                                 _ -> do liftIO $ showResult frontend result
 >                                                         lehelREPL frontend

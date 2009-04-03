@@ -28,11 +28,19 @@ The ActionResult type is the result of evaluated actions:
 
 > import Lehel.Core.Actions (ActionResult(..))
 
+And the whole eval function runs in Lehel's state monad, defined in:
+
+> import Lehel.Core.State
+
+For which we'll use liftIO as well:
+
+> import Control.Monad.Trans (liftIO)
+
 The eval function evaluates single actions:
 
-> eval :: String -> IO (ActionResult)
-> eval input = do ifacePath <- getLibDir
->                 evalResult <- lehelEval_ input ["Lehel.Core.Actions"] ["-package Lehel"] [] [ifacePath]
+> eval :: String -> LehelStateWithIO (ActionResult)
+> eval input = do ifacePath <- liftIO $ getLibDir
+>                 evalResult <- liftIO $ lehelEval_ input ["Lehel.Core.Actions"] ["-package Lehel"] [] [ifacePath]
 >                 case evalResult of
 >                   Left msgs -> return $ Error $ concatMap ((++) "\n") msgs
 >                   Right (Just action) -> action
