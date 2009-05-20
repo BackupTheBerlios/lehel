@@ -21,6 +21,7 @@ Library
         Paths_Lehel
     Build-Depends:
         base >= 4.0,
+        filepath,
         plugins,
         readline,
         directory,

@@ -26,6 +26,7 @@ The FrontEnd interface implementation, very simple yet:
 >     showResult _ ExitRequest = putStrLn $ "Exit request"
 >     showResult _ (Error str) = putStrLn $ "!!! ERROR: " ++ str
 >     showResult _ (ResultString str) = putStrLn str
+>     showResult _ ResultSuccess = return ()
 
 And a constructor function for the front end state:
 

@@ -12,7 +12,12 @@ TODO: Explain why are we hardcoding the number of panels (2) instead of a generi
 >                          LehelStateT,
 >                          LehelStateWithIO,
 >                          initialState,
->                          getCurrentPanelState
+>                          getCurrentPanelState,
+>                          getLeftPanelState,
+>                          getRightPanelState,
+>                          setCurrentPanelState,
+>                          setLeftPanelState,
+>                          setRightPanelState
 >                         )
 > where
 >   
@@ -77,3 +82,28 @@ We define some monadic functions for the state monad to be able to get the state
 > getCurrentPanelState = do ls <- get
 >                           let ps = lsCurrentPanelState ls
 >                           return ps
+
+We also have to get the left or right panel's state for current-panel-independent
+actions:
+
+> getLeftPanelState :: (Monad m) => LehelStateT m PanelState
+> getLeftPanelState = do ls <- get
+>                        return (lsLeft ls)
+> getRightPanelState :: (Monad m) => LehelStateT m PanelState
+> getRightPanelState = do ls <- get
+>                         return (lsRight ls)
+
+Another set of monadic functions required to change the panel states:
+
+> setCurrentPanelState :: (Monad m) => PanelState -> LehelStateT m ()
+> setCurrentPanelState ps = do ls <- get
+>                              case ls of
+>                                LehelState { lsCurrentPanel = LeftPanel } -> put $ ls { lsLeft = ps }
+>                                LehelState { lsCurrentPanel = RightPanel }-> put $ ls { lsRight = ps }
+
+> setLeftPanelState :: (Monad m) => PanelState -> LehelStateT m ()
+> setLeftPanelState ps = do ls <- get
+>                           put $ ls { lsLeft = ps }
+> setRightPanelState :: (Monad m) => PanelState -> LehelStateT m ()
+> setRightPanelState ps = do ls <- get
+>                            put $ ls { lsRight = ps }
