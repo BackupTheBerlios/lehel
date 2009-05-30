@@ -33,8 +33,3 @@ Executable lehel-cmd
     Build-Depends:
         base
     ghc-options -Wall -O2 -dynamic
-
-
-
-
-		
