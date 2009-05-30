@@ -19,7 +19,12 @@ must be hidden in the dynamically evaluated code as well (see Eval.lhs):
 To handle paths, we import the appropriate module:
 
 > import System.IO hiding (print)
-> import System.FilePath.Posix
+> import System.FilePath
+> import System.Directory
+
+And we'll also use liftIO inside action definitions, to perform IO functions:
+
+> import Control.Monad.Trans (liftIO)
 
 To be able to use the type-safe dynamic evaluation, the result type will
 have to be \emph{typeable}. For this reason we import the appropriate module:
@@ -119,6 +124,9 @@ And similarly change them:
 > (cd, cdL, cdR) = singlePanelAction1 cdImpl
 >     where
 >       cdImpl ps newPath = do let oldPath = psCurrentDir ps
->                              let newPath' = normalise $ oldPath </> newPath
->                              return (Just (ps { psCurrentDir = newPath' }), ResultSuccess)
+>                              newPath' <- liftIO $ canonicalizePath $ normalise $ oldPath </> newPath
+>                              exists <- liftIO $ doesDirectoryExist newPath'
+>                              case exists of
+>                                True ->  return (Just (ps { psCurrentDir = newPath' }), ResultSuccess)
+>                                False -> return (Nothing, Error "Directory doesn't exist")
 
