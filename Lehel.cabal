@@ -17,6 +17,8 @@ Library
         Lehel.Core.Frontend
         Lehel.Core.REPL
         Lehel.Core.State
+        Lehel.Core.VFS
+        Lehel.Core.FileSystems.RealFileSystem
     Other-modules:
         Paths_Lehel
     Build-Depends:

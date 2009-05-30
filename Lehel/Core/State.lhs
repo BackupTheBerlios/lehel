@@ -22,6 +22,8 @@ TODO: Explain why are we hardcoding the number of panels (2) instead of a generi
 > where
 >   
 
+> import Lehel.Core.VFS
+
 We'll define a state monad:
 
 > import Control.Monad.State
@@ -30,10 +32,6 @@ To be able to use the type-safe dynamic evaluation, the state type and the monad
 have to be \emph{typeable}. For this reason we import the appropriate module:
 
 > import Data.Typeable
-
-We'll use getCurrentDirectory when defining the initial state value:
-
-> import System.Directory (getCurrentDirectory)
 
 The state itself is currently very simple:
 
@@ -49,7 +47,7 @@ Where the state of current panel can be:
 And for both panels we have a panel state, which currently only holds
 the current directory:
 
-> data PanelState = PanelState { psCurrentDir :: FilePath } deriving (Typeable)
+> data PanelState = PanelState { psCurrentDir :: Item } deriving (Typeable)
 
 The following function gets the panel state depending on the current panel field:
 
@@ -69,12 +67,11 @@ TODO: LehelStateWithIO must be Typeable
 
 The initial state is defined by the following IO function:
 
-> initialState :: IO (LehelState)
-> initialState = do curdir <- getCurrentDirectory
->                   return $ LehelState { lsCurrentPanel = LeftPanel,
->                                         lsLeft = PanelState { psCurrentDir = curdir },
->                                         lsRight = PanelState { psCurrentDir = curdir }
->                                       }
+> initialState :: Item -> IO (LehelState)
+> initialState initialDir = return $ LehelState { lsCurrentPanel = LeftPanel,
+>                                                 lsLeft = PanelState { psCurrentDir = initialDir },
+>                                                 lsRight = PanelState { psCurrentDir = initialDir }
+>                                               }
 
 We define some monadic functions for the state monad to be able to get the state:
 

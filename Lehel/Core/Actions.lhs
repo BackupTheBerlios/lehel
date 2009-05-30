@@ -35,12 +35,19 @@ The actions will run in Lehel's state monad, which is defined in the State modul
 
 > import Lehel.Core.State
 
+Action results can also contain \emph{Items}, which are the base data structures
+for handling file systems in Lehel. It must be imported from the following 
+module:
+
+> import Lehel.Core.VFS
+
 Every action must result a value of the type ActionResult:
 
 > data ActionResult = InvalidCall
 >                   | ExitRequest
 >                   | ResultSuccess
 >                   | ResultString String
+>                   | ResultItems [Item]
 >                   | Error String
 >                     deriving (Eq, Show, Typeable)
 
@@ -116,17 +123,17 @@ We can easily get the current directory of the panels:
 > pwd, pwdL, pwdR :: LehelStateWithIO (ActionResult)
 > (pwd, pwdL, pwdR) = singlePanelAction0 pwdImpl
 >     where 
->       pwdImpl ps = return (Nothing, ResultString $ psCurrentDir ps)
+>       pwdImpl ps = return (Nothing, ResultString $ show $ psCurrentDir ps)
 
 And similarly change them:
 
 > cd, cdL, cdR :: FilePath -> LehelStateWithIO (ActionResult)
 > (cd, cdL, cdR) = singlePanelAction1 cdImpl
 >     where
->       cdImpl ps newPath = do let oldPath = psCurrentDir ps
->                              newPath' <- liftIO $ canonicalizePath $ normalise $ oldPath </> newPath
->                              exists <- liftIO $ doesDirectoryExist newPath'
->                              case exists of
->                                True ->  return (Just (ps { psCurrentDir = newPath' }), ResultSuccess)
->                                False -> return (Nothing, Error "Directory doesn't exist")
+>       cdImpl ps newPath = do let oldItem = psCurrentDir ps
+>                              newItem <- liftIO $ (itemChange oldItem) newPath
+>                              case newItem of
+>                                Just newItem' -> return (Just (ps { psCurrentDir = newItem' }), ResultSuccess)
+>                                Nothing -> return (Nothing, Error "Directory doesn't exist")
+
 
