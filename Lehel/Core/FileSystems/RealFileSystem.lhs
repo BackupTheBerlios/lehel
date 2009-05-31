@@ -22,7 +22,8 @@ Our main exported function creates a VFS Item value from a simple file system pa
 >                             itemUniqueName = "lehel:rfs://" ++ normalizedPath,
 >                             itemName = takeFileName normalizedPath,
 >                             itemFullPath = normalizedPath,
->                             itemChange = changeImpl
+>                             itemChange = changeImpl,
+>                             itemChildren = childrenImpl
 >                           }
 >     where
 >       normalizedPath = normalise path
@@ -31,3 +32,6 @@ Our main exported function creates a VFS Item value from a simple file system pa
 >                               case exists of
 >                                   True ->  return $ Just $ realFileSystemItem newPath'
 >                                   False -> return Nothing
+>
+>       childrenImpl = do paths <- getDirectoryContents path
+>                         return $ map realFileSystemItem paths

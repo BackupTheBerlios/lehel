@@ -17,14 +17,20 @@ The basic item of a file system is called Item:
 >                    itemUniqueName :: String,
 >                    itemName :: String,
 >                    itemFullPath :: String,
->                    itemChange :: String -> IO (Maybe Item)
+>                    itemChange :: String -> IO (Maybe Item),
+>                    itemChildren :: IO [Item]
 >                  } deriving Typeable
+
+It is currently implemented as a record. Probably it will be a type class later, but it 
+is currently not the focus of the development, so it is quite minimalistic.
 
 We have to specifiy Item as an instance of Show, to better support
 debugging in other areas:
 
 > instance Show Item where
 >     show item = show $ itemName item
+
+The equality can be checked using the unique name of the items:
 
 > instance Eq Item where
 >     i1 == i2 = (itemUniqueName i1) == (itemUniqueName i2)

@@ -7,7 +7,8 @@ This module collects every action-related type and function.
 >                            exit,
 >                            print,
 >                            pwd, pwdL, pwdR,
->                            cd, cdL, cdR
+>                            cd, cdL, cdR,
+>                            ls, lsL, lsR
 >                           )
 > where
 
@@ -136,4 +137,11 @@ And similarly change them:
 >                                Just newItem' -> return (Just (ps { psCurrentDir = newItem' }), ResultSuccess)
 >                                Nothing -> return (Nothing, Error "Directory doesn't exist")
 
+The list command (named ls to be familiar for users) returns the child items (if there is any)
+of the active (or given) panel's current item:
 
+> ls, lsL, lsR :: LehelStateWithIO (ActionResult)
+> (ls, lsL, lsR) = singlePanelAction0 lsImpl
+>     where
+>       lsImpl ps = do children <- liftIO $ itemChildren $ psCurrentDir ps
+>                      return (Nothing, ResultItems children)
