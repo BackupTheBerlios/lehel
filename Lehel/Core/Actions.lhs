@@ -8,7 +8,8 @@ This module collects every action-related type and function.
 >                            print,
 >                            pwd, pwdL, pwdR,
 >                            cd, cdL, cdR,
->                            ls, lsL, lsR
+>                            ls, lsL, lsR,
+>                            sort, sortBy
 >                           )
 > where
 
@@ -16,6 +17,11 @@ We have to hide some Prelude functions. It is important that these functions
 must be hidden in the dynamically evaluated code as well (see Eval.lhs):
 
 > import Prelude hiding (print)
+
+We'll use some data structure related functions, but import them qualified as
+they could collide with simple actions:
+
+> import qualified Data.List as List
 
 To handle paths, we import the appropriate module:
 
@@ -145,3 +151,20 @@ of the active (or given) panel's current item:
 >     where
 >       lsImpl ps = do children <- liftIO $ itemChildren $ psCurrentDir ps
 >                      return (Nothing, ResultItems children)
+
+We lift the simple sort function to the level of actions to allow users to manipulate "ls" action's result
+in an easy way:
+
+> sort :: LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
+> sort action = do result <- action
+>                  case result of
+>                    ResultItems items -> return $ ResultItems (List.sort items)
+>                    Error str -> return $ Error str
+>                    _ -> return $ Error "Cannot sort this kind of data"
+
+> sortBy :: (Item -> Item -> Ordering) -> LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
+> sortBy fn action = do result <- action
+>                       case result of
+>                                   ResultItems items -> return $ ResultItems (List.sortBy fn items)
+>                                   Error str -> return $ Error str
+>                                   _ -> return $ Error "Cannot sort this kind of data"

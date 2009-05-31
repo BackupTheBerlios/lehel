@@ -35,3 +35,8 @@ The equality can be checked using the unique name of the items:
 > instance Eq Item where
 >     i1 == i2 = (itemUniqueName i1) == (itemUniqueName i2)
 
+The standard ordering is done based on the item's name:
+
+> instance Ord Item where
+>     compare i1 i2 = compare (itemName i1) (itemName i2)
+
