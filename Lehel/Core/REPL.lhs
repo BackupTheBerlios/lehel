@@ -31,6 +31,7 @@ The main loop of the command interpreter part is the lehelREPL function:
 > lehelREPL frontend = do maybeLine <- liftIO $ readline "> "
 >                         case maybeLine of
 >                             Nothing -> return ()
+>                             Just "" -> lehelREPL frontend
 >                             Just line -> do liftIO $ addHistory line
 >                                             result <- eval line         
 >                                             case result of
