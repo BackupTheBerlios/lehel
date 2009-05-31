@@ -12,6 +12,7 @@ We'll have to initialize our state:
 The initial state will point to the system's current directory:
 
 > import System.Directory (getCurrentDirectory)
+> import System.IO.Error
 
 We import the Core's appropriate modules:
 
@@ -34,7 +35,7 @@ The FrontEnd interface implementation, very simple yet:
 >     showResult _ ExitRequest = putStrLn $ "Exit request"
 >     showResult _ (Error str) = putStrLn $ "!!! ERROR: " ++ str
 >     showResult _ (ResultString str) = putStrLn str
->     showResult _ (ResultItems items) = mapM_ (\a -> (return (showItem a)) >>= putStrLn) items
+>     showResult _ (ResultItems items) = mapM_ (\a -> (showItem a) >>= putStrLn) items
 >     showResult _ ResultSuccess = return ()
 
 And a constructor function for the front end state:
@@ -43,8 +44,17 @@ And a constructor function for the front end state:
 
 The following function converts an Item to a string, used by showResult:
 
-> showItem :: Item -> String
-> showItem (Item { itemName }) = itemName
+> showItem :: Item -> IO String
+> showItem (Item { itemName, itemIsDirectory, itemIsExecutable }) =
+>     do
+>       isD <- try itemIsDirectory
+>       isX <- try itemIsExecutable
+>       case (isD, isX) of
+>         (Left err1, _)            -> return $ "    " ++ itemName ++ " -> " ++ ioeGetErrorString err1
+>         (_, Left err2)            -> return $ "    " ++ itemName ++ " -> " ++ ioeGetErrorString err2
+>         (Right True, Right _)     -> return $ "[D] " ++ itemName
+>         (Right False, Right True) -> return $ "[*] " ++ itemName
+>         (Right False, Right False)-> return $ "    " ++ itemName
 
 
 And the main function:

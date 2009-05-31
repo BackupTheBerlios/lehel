@@ -28,7 +28,8 @@ Library
         readline,
         directory,
         random,
-        mtl
+        mtl,
+        unix
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

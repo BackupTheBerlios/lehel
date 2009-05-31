@@ -18,7 +18,9 @@ The basic item of a file system is called Item:
 >                    itemName :: String,
 >                    itemFullPath :: String,
 >                    itemChange :: String -> IO (Maybe Item),
->                    itemChildren :: IO [Item]
+>                    itemChildren :: IO [Item],
+>                    itemIsDirectory :: IO Bool,
+>                    itemIsExecutable :: IO Bool
 >                  } deriving Typeable
 
 It is currently implemented as a record. Probably it will be a type class later, but it 
