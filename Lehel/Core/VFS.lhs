@@ -16,6 +16,7 @@ The basic item of a file system is called Item:
 > data Item = Item { 
 >                    itemUniqueName :: String,
 >                    itemName :: String,
+>                    itemFullPath :: String,
 >                    itemChange :: String -> IO (Maybe Item)
 >                  } deriving Typeable
 

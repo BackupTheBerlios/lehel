@@ -21,6 +21,7 @@ Our main exported function creates a VFS Item value from a simple file system pa
 > realFileSystemItem path = Item { 
 >                             itemUniqueName = "lehel:rfs://" ++ normalizedPath,
 >                             itemName = takeFileName normalizedPath,
+>                             itemFullPath = normalizedPath,
 >                             itemChange = changeImpl
 >                           }
 >     where

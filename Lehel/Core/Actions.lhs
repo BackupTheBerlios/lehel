@@ -123,7 +123,7 @@ We can easily get the current directory of the panels:
 > pwd, pwdL, pwdR :: LehelStateWithIO (ActionResult)
 > (pwd, pwdL, pwdR) = singlePanelAction0 pwdImpl
 >     where 
->       pwdImpl ps = return (Nothing, ResultString $ show $ psCurrentDir ps)
+>       pwdImpl ps = return (Nothing, ResultString $ itemFullPath $ psCurrentDir ps)
 
 And similarly change them:
 
