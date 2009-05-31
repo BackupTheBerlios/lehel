@@ -19,6 +19,7 @@ The basic item of a file system is called Item:
 >                    itemFullPath :: String,
 >                    itemChange :: String -> IO (Maybe Item),
 >                    itemChildren :: IO [Item],
+>                    itemExecute :: [String] -> FilePath -> IO (),
 >                    itemIsDirectory :: IO Bool,
 >                    itemIsExecutable :: IO Bool
 >                  } deriving Typeable

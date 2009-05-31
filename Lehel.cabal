@@ -29,7 +29,8 @@ Library
         directory,
         random,
         mtl,
-        unix
+        unix,
+        process
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

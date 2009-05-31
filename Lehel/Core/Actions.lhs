@@ -9,7 +9,8 @@ This module collects every action-related type and function.
 >                            pwd, pwdL, pwdR,
 >                            cd, cdL, cdR,
 >                            ls, lsL, lsR,
->                            sort, sortBy
+>                            sort, sortBy,
+>                            run, runL, runR
 >                           )
 > where
 
@@ -47,6 +48,7 @@ for handling file systems in Lehel. It must be imported from the following
 module:
 
 > import Lehel.Core.VFS
+> import Lehel.Core.FileSystems.RealFileSystem
 
 Every action must result a value of the type ActionResult:
 
@@ -112,6 +114,24 @@ these set of actions, we define the following function constructors:
 >                   Just ps'' -> setRightPanelState ps'' >> return r
 >                   Nothing -> return r
 
+> singlePanelAction2 fnImpl = (fn, fnL, fnR)
+>     where
+>       fn x y = do ps <- getCurrentPanelState
+>                   (ps', r) <- fnImpl ps x y
+>                   case ps' of
+>                            Just ps'' -> setCurrentPanelState ps'' >> return r
+>                            Nothing -> return r
+>       fnL x y = do ps <- getLeftPanelState
+>                    (ps', r) <- fnImpl ps x y
+>                    case ps' of
+>                             Just ps'' -> setLeftPanelState ps'' >> return r
+>                             Nothing -> return r                
+>       fnR x y = do ps <- getRightPanelState
+>                    (ps', r) <- fnImpl ps x y
+>                    case ps' of
+>                             Just ps'' -> setRightPanelState ps'' >> return r
+>                             Nothing -> return r
+
 Some simple basic actions are defined here:
 
 The following action signals an exit request:
@@ -168,3 +188,24 @@ in an easy way:
 >                                   ResultItems items -> return $ ResultItems (List.sortBy fn items)
 >                                   Error str -> return $ Error str
 >                                   _ -> return $ Error "Cannot sort this kind of data"
+
+One of the most important basic actions is run. Although it has a special syntax processed by input filters,
+it is a simple Lehel action just like the other ones, taking the path of the executable and a list of parameters.
+If the path is relative, it is first looked up in the current directory, then in the system's search path.
+
+> run, runL, runR :: String -> [String] -> LehelStateWithIO (ActionResult)
+> (run, runL, runR) = singlePanelAction2 runImpl
+>     where
+>       runImpl ps exe params = do let cdir = psCurrentDir ps
+>                                  children <- liftIO $ itemChildren cdir
+>                                  let localExe = List.find (\i -> itemName i == exe) children
+>                                  case localExe of
+>                                    Just exeItem -> do liftIO $ (itemExecute exeItem) params (itemFullPath cdir)
+>                                                       return (Nothing, ResultSuccess)
+>                                    Nothing -> do searchedExe <- liftIO $ findExecutable exe
+>                                                  case searchedExe of
+>                                                    Just foundExe -> do liftIO $ (itemExecute (realFileSystemItem foundExe)) 
+>                                                                                    params (itemFullPath cdir)
+>                                                                        return (Nothing, ResultSuccess)
+>                                                    Nothing -> return (Nothing, Error "Could not find executable")
+>   
