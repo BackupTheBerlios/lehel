@@ -31,7 +31,7 @@ We have to specifiy Item as an instance of Show, to better support
 debugging in other areas:
 
 > instance Show Item where
->     show item = show $ itemName item
+>     show = itemName
 
 The equality can be checked using the unique name of the items:
 
