@@ -17,6 +17,7 @@ Library
         Lehel.Core.Frontend
         Lehel.Core.REPL
         Lehel.Core.State
+        Lehel.Core.InputFilters
         Lehel.Core.VFS
         Lehel.Core.FileSystems.RealFileSystem
     Other-modules:
@@ -30,7 +31,8 @@ Library
         random,
         mtl,
         unix,
-        process
+        process,
+        regex-compat
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

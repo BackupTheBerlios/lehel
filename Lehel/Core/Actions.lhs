@@ -10,7 +10,8 @@ This module collects every action-related type and function.
 >                            cd, cdL, cdR,
 >                            ls, lsL, lsR,
 >                            sort, sortBy,
->                            run, runL, runR
+>                            run, runL, runR,
+>                            addFilter
 >                           )
 > where
 
@@ -209,3 +210,7 @@ If the path is relative, it is first looked up in the current directory, then in
 >                                                                        return (Nothing, ResultSuccess)
 >                                                    Nothing -> return (Nothing, Error "Could not find executable")
 >   
+
+The following function is a simple wrapper around @registerFilter@, to be able for users:
+
+> addFilter f = (registerFilter f) >> (return ResultSuccess)

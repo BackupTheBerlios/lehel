@@ -40,7 +40,7 @@ The eval function evaluates single actions:
 
 > eval :: String -> LehelStateWithIO (ActionResult)
 > eval input = do ifacePath <- liftIO $ getLibDir
->                 evalResult <- liftIO $ lehelEval_ input ["Lehel.Core.Actions"] ["-package Lehel"] [] [ifacePath]
+>                 evalResult <- liftIO $ lehelEval_ input ["Lehel.Core.Actions", "Lehel.Core.InputFilters"] ["-package Lehel"] [] [ifacePath]
 >                 case evalResult of
 >                   Left msgs -> return $ Error $ concatMap ((++) "\n") msgs
 >                   Right (Just action) -> action
