@@ -1,14 +1,14 @@
-Name:		Lehel
+Name:	   Lehel
 Version:	0.1
-Cabal-Version:	>= 1.6
-Author:		Daniel Vigovszky <daniel.vigovszky@gmail.com>
-Maintainer:	Daniel Vigovszky <daniel.vigovszky@gmail.com>
-Category:	File Management
-Synopsis:	Extensible file manager and scripting framework
-Description:	Extensible dual panel file manager and scripting framework with multiple frontends.
-Stability:	Experimental
+Cabal-Version:  >= 1.6
+Author:	 Daniel Vigovszky <daniel.vigovszky@gmail.com>
+Maintainer:     Daniel Vigovszky <daniel.vigovszky@gmail.com>
+Category:       File Management
+Synopsis:       Extensible file manager and scripting framework
+Description:    Extensible dual panel file manager and scripting framework with multiple frontends.
+Stability:      Experimental
 License:	GPL
-Build-Type:	Simple
+Build-Type:     Simple
 
 Library
     Exposed-modules: 
@@ -32,7 +32,8 @@ Library
         mtl,
         unix,
         process,
-        regex-compat
+        regex-compat,
+        containers
 
 Executable lehel-cmd
     Main-Is: CommandLineMain.lhs

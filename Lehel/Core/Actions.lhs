@@ -4,9 +4,11 @@ This module collects every action-related type and function.
 
 > module Lehel.Core.Actions (
 >                            ActionResult(..),
+>                            ItemsHint(..),
 >                            exit,
 >                            print,
->                            pwd, pwdL, pwdR,
+>                            switchL, switchR, toggle,
+>                            pwd, pwdL, pwdR, pwdLR,
 >                            cd, cdL, cdR,
 >                            ls, lsL, lsR,
 >                            sort, sortBy,
@@ -24,6 +26,7 @@ We'll use some data structure related functions, but import them qualified as
 they could collide with simple actions:
 
 > import qualified Data.List as List
+> import qualified Data.Set as Set
 
 To handle paths, we import the appropriate module:
 
@@ -43,6 +46,7 @@ have to be \emph{typeable}. For this reason we import the appropriate module:
 The actions will run in Lehel's state monad, which is defined in the State module:
 
 > import Lehel.Core.State
+> import Control.Monad.State
 
 Action results can also contain \emph{Items}, which are the base data structures
 for handling file systems in Lehel. It must be imported from the following 
@@ -57,9 +61,13 @@ Every action must result a value of the type ActionResult:
 >                   | ExitRequest
 >                   | ResultSuccess
 >                   | ResultString String
->                   | ResultItems [Item]
+>                   | ResultItems (Set.Set ItemsHint) [Item]
 >                   | Error String
 >                     deriving (Eq, Show, Typeable)
+
+The following flags can be used in the frontends to improve the action result display:
+
+> data ItemsHint = NoItemsHint | ShowItemsFullPath deriving (Show, Eq, Ord, Typeable)
 
 As it was stated, this data type must be an instance of \emph{Typeable} to be
 able to perform type-safe dynamic evaluation. This is done automatically by deriving.
@@ -146,12 +154,34 @@ to the user:
 > print :: String -> LehelStateWithIO (ActionResult)
 > print s = return $ (ResultString s)
 
+The next three functions are responsible for switching between panels:
+
+> switchL :: LehelStateWithIO (ActionResult)
+> switchL = do ls <- get
+>              put $ ls { lsCurrentPanel = LeftPanel }
+>              return ResultSuccess
+> switchR = do ls <- get
+>              put $ ls { lsCurrentPanel = RightPanel }
+>              return ResultSuccess
+> toggle = do ls <- get
+>             case (lsCurrentPanel ls) of
+>               LeftPanel -> switchR
+>               RightPanel-> switchL
+
 We can easily get the current directory of the panels:
 
 > pwd, pwdL, pwdR :: LehelStateWithIO (ActionResult)
 > (pwd, pwdL, pwdR) = singlePanelAction0 pwdImpl
 >     where 
 >       pwdImpl ps = return (Nothing, ResultString $ itemFullPath $ psCurrentDir ps)
+
+The @pwdLR@ helper function returns both working directories:
+
+> pwdLR :: LehelStateWithIO (ActionResult)
+> pwdLR = do left <- getLeftPanelState
+>            right <- getRightPanelState
+>            return $ ResultItems (Set.singleton ShowItemsFullPath) [psCurrentDir left,
+>                                                                    psCurrentDir right]
 
 And similarly change them:
 
@@ -171,7 +201,7 @@ of the active (or given) panel's current item:
 > (ls, lsL, lsR) = singlePanelAction0 lsImpl
 >     where
 >       lsImpl ps = do children <- liftIO $ itemChildren $ psCurrentDir ps
->                      return (Nothing, ResultItems children)
+>                      return (Nothing, ResultItems (Set.empty) children)
 
 We lift the simple sort function to the level of actions to allow users to manipulate "ls" action's result
 in an easy way:
@@ -179,14 +209,14 @@ in an easy way:
 > sort :: LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
 > sort action = do result <- action
 >                  case result of
->                    ResultItems items -> return $ ResultItems (List.sort items)
+>                    ResultItems hint items -> return $ ResultItems hint (List.sort items)
 >                    Error str -> return $ Error str
 >                    _ -> return $ Error "Cannot sort this kind of data"
 
 > sortBy :: (Item -> Item -> Ordering) -> LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
 > sortBy fn action = do result <- action
 >                       case result of
->                                   ResultItems items -> return $ ResultItems (List.sortBy fn items)
+>                                   ResultItems hint items -> return $ ResultItems hint (List.sortBy fn items)
 >                                   Error str -> return $ Error str
 >                                   _ -> return $ Error "Cannot sort this kind of data"
 
@@ -211,6 +241,6 @@ If the path is relative, it is first looked up in the current directory, then in
 >                                                    Nothing -> return (Nothing, Error "Could not find executable")
 >   
 
-The following function is a simple wrapper around @registerFilter@, to be able for users:
+The following function is a simple wrapper around @registerFilter@, to be available for users:
 
 > addFilter f = (registerFilter f) >> (return ResultSuccess)
