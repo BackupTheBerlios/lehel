@@ -36,22 +36,22 @@ The FrontEnd interface implementation, very simple yet:
 
 > instance FrontEnd FrontEndState where
 >     showResult _ InvalidCall = putStrLn "!!! invalid call"
->     showResult _ ExitRequest = putStrLn $ "Exit request"
+>     showResult _ ExitRequest = putStrLn "Exit request"
 >     showResult _ (Error str) = putStrLn $ "!!! ERROR: " ++ str
 >     showResult _ (ResultString str) = putStrLn str
->     showResult _ (ResultItems hints items) = mapM_ (\a -> (showItem hints a) >>= putStrLn)items
+>     showResult _ (ResultItems hints items) = mapM_ (\a -> showItem hints a >>= putStrLn)items
 >     showResult _ ResultSuccess = return ()
 
 And a constructor function for the front end state:
 
-> createFrontEnd = return $ FES
+> createFrontEnd = return FES
 
 The following function converts an Item to a string, used by showResult:
 
 > showItem :: Set ItemsHint -> Item -> IO String
 > showItem hints (Item { itemName, itemFullPath, itemIsDirectory, itemIsExecutable }) =
 >     do
->       let name = if (ShowItemsFullPath `member` hints) then itemFullPath else itemName
+>       let name = if ShowItemsFullPath `member` hints then itemFullPath else itemName
 >       isD <- try itemIsDirectory
 >       isX <- try itemIsExecutable
 >       case (isD, isX) of

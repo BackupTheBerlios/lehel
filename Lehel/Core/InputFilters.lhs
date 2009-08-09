@@ -34,8 +34,7 @@ order.
 > filterInput input = 
 >     do ls <- get
 >        let filters = lsFilters ls
->        input' <- processInput input filters
->        return input'
+>        processInput input filters
 >     where
 >       processInput i [] = return i
 >       processInput i (f:fs) =
@@ -75,18 +74,19 @@ It is also implemented in a pure function:
 
 The command line is parsed and converted to a run call by the following function:
 
+> buildRunCommand :: String -> String
 > buildRunCommand input = 
->     let words = splitInput input in "run " ++ quoted (head words) ++ " " ++ show (tail words)
+>     let params = splitInput input in "run " ++ quoted (head params) ++ " " ++ show (tail params)
 >     where
 >       quoted str = "\"" ++ str ++ "\""
 >       splitInput str = reverse $ splitInput' (words str) 0 []
->       splitInput' [] n w = w
+>       splitInput' [] _ w = w
 >       splitInput' (('\"':w0):s) 0 w = splitInput' s 1 (w0:w)
 >       splitInput' (('\"':w1):s) n (w0:w) = splitInput' s (n+1) ((w0++" " ++w1):w)
 >       splitInput' (w0:s) 0 w = splitInput' s 0 (w0:w)
 >       splitInput' (w1:s) n (w0:w) =
 >           let ec = last w1
 >           in if ec == '\"' 
->              then splitInput' s (n-1) ((w0++" "++(take (length w1 - 1) w1)):w)
+>              then splitInput' s (n-1) ((w0++" "++ take (length w1 - 1) w1):w)
 >              else splitInput' s n ((w0 ++ " " ++ w1):w)
 

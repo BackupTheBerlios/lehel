@@ -10,6 +10,7 @@ sources such as real file systems, archive files, FTP/SSH links, etc.
 > where
 
 > import Data.Typeable
+> import Data.Function (on)
   
 The basic item of a file system is called Item:
 
@@ -36,7 +37,7 @@ debugging in other areas:
 The equality can be checked using the unique name of the items:
 
 > instance Eq Item where
->     i1 == i2 = (itemUniqueName i1) == (itemUniqueName i2)
+>     (==) = (==) `on` itemUniqueName
 
 The standard ordering is done based on the item's name:
 

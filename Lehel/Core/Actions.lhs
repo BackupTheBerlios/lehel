@@ -1,19 +1,20 @@
-> {-# OPTIONS_GHC -XDeriveDataTypeable -XTypeSynonymInstances -XFlexibleInstances #-}
+> {-# OPTIONS_GHC -XDeriveDataTypeable -XTypeSynonymInstances #-}
 
 This module collects every action-related type and function.
 
 > module Lehel.Core.Actions (
 >                            ActionResult(..),
+>                            Action(..),
 >                            ItemsHint(..),
->                            exit,
->                            print,
->                            switchL, switchR, toggle,
->                            pwd, pwdL, pwdR, pwdLR,
->                            cd, cdL, cdR,
->                            ls, lsL, lsR,
->                            sort, sortBy,
->                            run, runL, runR,
->                            addFilter
+>                            ExitAction(..),
+>                            PrintAction(..),
+>                            SwitchAction(..),
+>                            PwdAction(..),
+>                            CdAction(..),
+>                            LsAction(..),
+>                            RunAction(..),
+>                            AddFilterAction(..),
+>                            sort, sortBy
 >                           )
 > where
 
@@ -30,13 +31,8 @@ they could collide with simple actions:
 
 To handle paths, we import the appropriate module:
 
-> import System.IO hiding (print)
 > import System.FilePath
 > import System.Directory
-
-And we'll also use liftIO inside action definitions, to perform IO functions:
-
-> import Control.Monad.Trans (liftIO)
 
 To be able to use the type-safe dynamic evaluation, the result type will
 have to be \emph{typeable}. For this reason we import the appropriate module:
@@ -73,13 +69,16 @@ As it was stated, this data type must be an instance of \emph{Typeable} to be
 able to perform type-safe dynamic evaluation. This is done automatically by deriving.
 Note that this needs the -XDeriveDataTypeable compiler flag to be specified.
 
-The monadic type LehelStateWithIO (ActionResult) must be instantiated manually:
+> instance Typeable1 LehelStateWithIO where
+>     typeOf1 _ = mkTyConApp (mkTyCon "Lehel.Core.LehelState-withIO") []
 
-> instance Typeable (LehelStateWithIO ActionResult) where
->     typeOf _ = mkTyConApp (mkTyCon "Lehel.Core.LehelState-withIO-Lehel.Core.ActionResult") []
+We've used -XTypeSynonymInstances to improve readibility here.
 
-We've used -XTypeSynonymInstances to improve readibility here, and -XFlexibleInstances to be able to specify
-ActionResult in the head of the instance declaration.
+The actions will be represented with a type class that defines how they can be ran and combined
+with each other:
+
+> class Action a where
+>     runAction :: a -> LehelStateWithIO (ActionResult)
 
 Simple actions can be implemented with one common action function and aliases defined
 working for the current panel, the left panel or the right panel. To help implementing
@@ -141,106 +140,151 @@ these set of actions, we define the following function constructors:
 >                             Just ps'' -> setRightPanelState ps'' >> return r
 >                             Nothing -> return r
 
-Some simple basic actions are defined here:
+\subsection{Actions}
+In the next section we'll define various actions and their possible relationships,
+using the above defined type classes.
 
-The following action signals an exit request:
+\subsubsection{Exit action}
+The following data type represents an exit action:
 
-> exit :: LehelStateWithIO (ActionResult)
-> exit = return $ ExitRequest
+> data ExitAction = Exit
 
-And the following one returns a string to the frontend which will be displayed
+It is an action, and running it simply returns an exit request:
+
+> instance Action ExitAction where
+>     runAction _ = return ExitRequest
+
+\subsubsection{Print action}
+The print action returns a string to the frontend which will be displayed
 to the user:
 
-> print :: String -> LehelStateWithIO (ActionResult)
-> print s = return $ (ResultString s)
+> data PrintAction = Print String
 
+> instance Action PrintAction where
+>     runAction (Print str) = return (ResultString str)
+
+\subsubsection{Switching between panels}
 The next three functions are responsible for switching between panels:
 
-> switchL :: LehelStateWithIO (ActionResult)
-> switchL = do ls <- get
->              put $ ls { lsCurrentPanel = LeftPanel }
->              return ResultSuccess
-> switchR = do ls <- get
->              put $ ls { lsCurrentPanel = RightPanel }
->              return ResultSuccess
-> toggle = do ls <- get
->             case (lsCurrentPanel ls) of
->               LeftPanel -> switchR
->               RightPanel-> switchL
+> data SwitchAction = SwitchL | SwitchR | Toggle
 
-We can easily get the current directory of the panels:
+> instance Action SwitchAction where
+>     runAction SwitchL = do lst <- get
+>                            put $ lst { lsCurrentPanel = LeftPanel }
+>                            return ResultSuccess
+>     runAction SwitchR = do lst <- get
+>                            put $ lst { lsCurrentPanel = RightPanel }
+>                            return ResultSuccess
+>     runAction Toggle = do lst <- get
+>                           case (lsCurrentPanel lst) of
+>                             LeftPanel -> runAction SwitchL
+>                             RightPanel-> runAction SwitchR
 
-> pwd, pwdL, pwdR :: LehelStateWithIO (ActionResult)
-> (pwd, pwdL, pwdR) = singlePanelAction0 pwdImpl
->     where 
->       pwdImpl ps = return (Nothing, ResultString $ itemFullPath $ psCurrentDir ps)
+\subsubsection{Getting the current directory}
+We can easily get the current directory of the panels. The command is named as
+\emph{print working directory}, to make it more convenient for unix users.
 
-The @pwdLR@ helper function returns both working directories:
+> data PwdAction = Pwd | PwdL | PwdR | PwdLR
 
-> pwdLR :: LehelStateWithIO (ActionResult)
-> pwdLR = do left <- getLeftPanelState
->            right <- getRightPanelState
->            return $ ResultItems (Set.singleton ShowItemsFullPath) [psCurrentDir left,
->                                                                    psCurrentDir right]
+> instance Action PwdAction where
+>     runAction PwdLR = do left <- getLeftPanelState
+>                          right <- getRightPanelState
+>                          return $ ResultItems (Set.singleton ShowItemsFullPath) [psCurrentDir left,
+>                                                                                  psCurrentDir right]
+>     runAction p = case p of
+>                     Pwd -> pwd
+>                     PwdL -> pwdL
+>                     PwdR -> pwdR                     
+>                   where
+>                     pwdImpl ps = return (Nothing, ResultString $ itemFullPath $ psCurrentDir ps)
+>                     (pwd, pwdL, pwdR) = singlePanelAction0 pwdImpl
 
-And similarly change them:
+\subsubsection{Change directory action}
+Changing the current directory is similar to the previous action (@pwd@), but 
+it also has a parameter:
 
-> cd, cdL, cdR :: FilePath -> LehelStateWithIO (ActionResult)
-> (cd, cdL, cdR) = singlePanelAction1 cdImpl
->     where
->       cdImpl ps newPath = do let oldItem = psCurrentDir ps
->                              newItem <- liftIO $ (itemChange oldItem) newPath
->                              case newItem of
->                                Just newItem' -> return (Just (ps { psCurrentDir = newItem' }), ResultSuccess)
->                                Nothing -> return (Nothing, Error "Directory doesn't exist")
+> data CdAction = Cd FilePath | CdL FilePath | CdR FilePath
 
-The list command (named ls to be familiar for users) returns the child items (if there is any)
+> instance Action CdAction where
+>     runAction p = case p of
+>                     Cd path -> cd path
+>                     CdL path -> cdL path
+>                     CdR path -> cdR path
+>                   where
+>                     cdImpl ps newPath = do let oldItem = psCurrentDir ps
+>                                            newItem <- liftIO (itemChange oldItem newPath)
+>                                            case newItem of
+>                                              Just newItem' -> return (Just (ps { psCurrentDir = newItem' }), ResultSuccess)
+>                                              Nothing -> return (Nothing, Error "Directory doesn't exist")
+>                     (cd, cdL, cdR) = singlePanelAction1 cdImpl
+
+\subsubsection{List action}
+The list command (named @ls@ to be familiar for users) returns the child items (if there is any)
 of the active (or given) panel's current item:
 
-> ls, lsL, lsR :: LehelStateWithIO (ActionResult)
-> (ls, lsL, lsR) = singlePanelAction0 lsImpl
->     where
->       lsImpl ps = do children <- liftIO $ itemChildren $ psCurrentDir ps
->                      return (Nothing, ResultItems (Set.empty) children)
+> data LsAction = Ls | LsL | LsR
+
+> instance Action LsAction where
+>     runAction p = case p of
+>                     Ls -> ls
+>                     LsL-> lsL
+>                     LsR-> lsR
+>                   where
+>                     lsImpl ps = do children <- liftIO $ itemChildren $ psCurrentDir ps
+>                                    return (Nothing, ResultItems Set.empty children)
+>                     (ls, lsL, lsR) = singlePanelAction0 lsImpl
 
 We lift the simple sort function to the level of actions to allow users to manipulate "ls" action's result
 in an easy way:
 
-> sort :: LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
-> sort action = do result <- action
+> sort :: (Action a) => a -> LehelStateWithIO (ActionResult)
+> sort action = do result <- runAction action
 >                  case result of
 >                    ResultItems hint items -> return $ ResultItems hint (List.sort items)
 >                    Error str -> return $ Error str
 >                    _ -> return $ Error "Cannot sort this kind of data"
 
-> sortBy :: (Item -> Item -> Ordering) -> LehelStateWithIO (ActionResult) -> LehelStateWithIO (ActionResult)
-> sortBy fn action = do result <- action
+> sortBy :: (Action a) => (Item -> Item -> Ordering) -> a -> LehelStateWithIO (ActionResult)
+> sortBy fn action = do result <- runAction action
 >                       case result of
 >                                   ResultItems hint items -> return $ ResultItems hint (List.sortBy fn items)
 >                                   Error str -> return $ Error str
 >                                   _ -> return $ Error "Cannot sort this kind of data"
 
+\subsubsection{Run program action}
 One of the most important basic actions is run. Although it has a special syntax processed by input filters,
 it is a simple Lehel action just like the other ones, taking the path of the executable and a list of parameters.
 If the path is relative, it is first looked up in the current directory, then in the system's search path.
 
-> run, runL, runR :: String -> [String] -> LehelStateWithIO (ActionResult)
-> (run, runL, runR) = singlePanelAction2 runImpl
->     where
->       runImpl ps exe params = do let cdir = psCurrentDir ps
->                                  children <- liftIO $ itemChildren cdir
->                                  let localExe = List.find (\i -> itemName i == exe) children
->                                  case localExe of
->                                    Just exeItem -> do liftIO $ (itemExecute exeItem) params (itemFullPath cdir)
->                                                       return (Nothing, ResultSuccess)
->                                    Nothing -> do searchedExe <- liftIO $ findExecutable exe
->                                                  case searchedExe of
->                                                    Just foundExe -> do liftIO $ (itemExecute (realFileSystemItem foundExe)) 
->                                                                                    params (itemFullPath cdir)
->                                                                        return (Nothing, ResultSuccess)
->                                                    Nothing -> return (Nothing, Error "Could not find executable")
+> data RunAction = Run String [String]
+>                | RunL String [String]
+>                | RunR String [String]
+
+> instance Action RunAction where
+>     runAction p = case p of
+>                     Run exe params -> run exe params
+>                     RunL exe params -> runL exe params
+>                     RunR exe params -> runR exe params
+>         where
+>           runImpl ps exe params = do let cdir = psCurrentDir ps
+>                                      children <- liftIO $ itemChildren cdir
+>                                      let localExe = List.find (\i -> itemName i == exe) children
+>                                      case localExe of
+>                                        Just exeItem -> do liftIO $ itemExecute exeItem params (itemFullPath cdir)
+>                                                           return (Nothing, ResultSuccess)
+>                                        Nothing -> do searchedExe <- liftIO $ findExecutable exe
+>                                                      case searchedExe of
+>                                                        Just foundExe -> do liftIO $ itemExecute (realFileSystemItem foundExe) 
+>                                                                                     params (itemFullPath cdir)
+>                                                                            return (Nothing, ResultSuccess)
+>                                                        Nothing -> return (Nothing, Error "Could not find executable")
+>           (run, runL, runR) = singlePanelAction2 runImpl
 >   
 
-The following function is a simple wrapper around @registerFilter@, to be available for users:
+\subsubsection{Add filter action}
+The following action is a simple wrapper around @registerFilter@, to be available for users:
 
-> addFilter f = (registerFilter f) >> (return ResultSuccess)
+> data AddFilterAction = AddFilter InputFilter
+
+> instance Action AddFilterAction where
+>     runAction (AddFilter f) = registerFilter f >> return ResultSuccess

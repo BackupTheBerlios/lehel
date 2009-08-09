@@ -64,11 +64,11 @@ The following function gets the panel state depending on the current panel field
 
 Using these record types we can define our state monad transformer:
 
-> type LehelStateT m a = StateT LehelState m a 
+> type LehelStateT = StateT LehelState
 
 And it will be often combined with IO monad:
 
-> type LehelStateWithIO a = LehelStateT IO a
+> type LehelStateWithIO = LehelStateT IO
 
 TODO: LehelStateWithIO must be Typeable
 
@@ -80,11 +80,11 @@ functions, which is:
 The initial state is defined by the following IO function:
 
 > initialState :: Item -> IO (LehelState)
-> initialState initialDir = return $ LehelState { lsCurrentPanel = LeftPanel,
->                                                 lsLeft = PanelState { psCurrentDir = initialDir },
->                                                 lsRight = PanelState { psCurrentDir = initialDir },
->                                                 lsFilters = []
->                                               }
+> initialState initialDir = return LehelState { lsCurrentPanel = LeftPanel,
+>                                               lsLeft = PanelState { psCurrentDir = initialDir },
+>                                               lsRight = PanelState { psCurrentDir = initialDir },
+>                                               lsFilters = []
+>                                             }
 
 We define some monadic functions for the state monad to be able to get the state:
 
@@ -122,7 +122,7 @@ For registering and unregistering input filters:
 
 > registerFilter :: InputFilter -> LehelStateWithIO ()
 > registerFilter f = do ls <- get
->                       let filters = (lsFilters ls) ++ [f]
+>                       let filters = lsFilters ls ++ [f]
 >                       put $ ls { lsFilters = filters }
 
 TODO: unregistering filters is not supported currently. To support it we'll probably have to associate ids to registered filters and store them in a map instead of list.

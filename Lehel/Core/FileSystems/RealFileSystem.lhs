@@ -12,11 +12,9 @@ We have to import the VFS module which we'll use:
 To handle file modes we need bitwise operators:
 
 > import Data.Bits
-> import Numeric
 
 And we will also using file path and directory related modules:
 
-> import System.IO
 > import System.FilePath
 > import System.Directory
 > import System.Posix.Files
@@ -39,9 +37,7 @@ Our main exported function creates a VFS Item value from a simple file system pa
 >       normalizedPath = normalise path
 >       changeImpl newPath = do newPath' <- canonicalizePath $ normalise $ path </> newPath
 >                               exists <- doesDirectoryExist newPath'
->                               case exists of
->                                   True ->  return $ Just $ realFileSystemItem newPath'
->                                   False -> return Nothing
+>                               if exists then return $ Just $ realFileSystemItem newPath' else return Nothing
 >
 >       childrenImpl = do paths <- getDirectoryContents normalizedPath
 >                         return $ map (\p -> realFileSystemItem (path </> p)) paths
