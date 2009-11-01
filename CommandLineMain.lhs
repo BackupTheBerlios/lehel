@@ -25,6 +25,7 @@ We import the Core's appropriate modules:
 > import Lehel.Core.Frontend
 > import Lehel.Core.State
 > import Lehel.Core.VFS
+> import Lehel.Core.InputFilters
 > import Lehel.Core.FileSystems.RealFileSystem
 
 The following type has no meaning yet, it is only here 
@@ -68,5 +69,7 @@ And the main function:
 > main = do frontend <- createFrontEnd        
 >           curdir <- getCurrentDirectory
 >           st <- initialState (realFileSystemItem curdir)
->           evalStateT (lehelREPL frontend) st
+>           evalStateT (do 
+>                        registerFilter actionWrapperFilter
+>                        lehelREPL frontend) st
 

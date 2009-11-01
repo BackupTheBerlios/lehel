@@ -26,7 +26,7 @@ with the auto-generated getLibDir function:
 
 The ActionResult type is the result of evaluated actions:
 
-> import Lehel.Core.Actions (ActionResult(..), Action(..))
+> import Lehel.Core.Actions (ActionResult(..), ActionWrapper(..))
 
 And the whole eval function runs in Lehel's state monad, defined in:
 
@@ -43,7 +43,7 @@ The eval function evaluates single actions:
 >                 evalResult <- liftIO $ lehelEval_ input ["Lehel.Core.Actions", "Lehel.Core.InputFilters"] ["-package Lehel"] [] [ifacePath]
 >                 case evalResult of
 >                   Left msgs -> return $ Error $ concatMap ((++) "\n") msgs
->                   Right (Just action) -> runAction action
+>                   Right (Just action) -> runWrappedAction action
 >                   Right Nothing -> return $ Error "Invalid command"
 
 We need to use our own eval_ and unsafeEval_ implementation, to be able to hide Prelude items

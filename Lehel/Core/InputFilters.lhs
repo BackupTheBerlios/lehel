@@ -6,6 +6,7 @@ the REPL.
 
 > module Lehel.Core.InputFilters (
 >                                InputFilter,
+>                                actionWrapperFilter,
 >                                filterInput,
 >                                simpleCDFilter,
 >                                runFilter
@@ -41,6 +42,12 @@ order.
 >           do i' <- f i
 >              processInput (fromMaybe i i') fs
 
+The @actionWrapperFilter@ is an input filter which is executed always, to
+wrap any data structure that belongs to the @Action@ typeclass into @ActionWrapper@
+records, to ensure that dynamic evaluation works correctly.
+
+> actionWrapperFilter :: InputFilter
+> actionWrapperFilter input = return (Just ("wrapAction $ " ++ input))
 
 The @simpleCDFilter@ is an input filter that allows typing cd, cdL and cdR commands
 without enclosing the target directory between "". 

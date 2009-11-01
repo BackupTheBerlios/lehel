@@ -5,6 +5,8 @@ This module collects every action-related type and function.
 > module Lehel.Core.Actions (
 >                            ActionResult(..),
 >                            Action(..),
+>                            ActionWrapper(..),
+>                            wrapAction,
 >                            ItemsHint(..),
 >                            ExitAction(..),
 >                            PrintAction(..),
@@ -80,6 +82,24 @@ with each other:
 > class Action a where
 >     runAction :: a -> LehelStateWithIO (ActionResult)
 
+For this typeclass we have to create a concrete wrapper structure, to avoid 
+problems when evaluating problems at runtime. This wrapper structure will also
+belong to the Action typeclass, so this wrapping has no effect to most of the functions in the 
+application:
+
+> data ActionWrapper = WrappedAction { runWrappedAction :: LehelStateWithIO (ActionResult) }
+>                      deriving Typeable
+
+> instance Action ActionWrapper where
+>     runAction = runWrappedAction
+
+The @wrapAction@ function simple wraps any @Action@ instance to this record:
+
+> wrapAction :: (Action a) => a -> ActionWrapper
+> wrapAction a = WrappedAction {
+>                  runWrappedAction = runAction a
+>                }
+
 Simple actions can be implemented with one common action function and aliases defined
 working for the current panel, the left panel or the right panel. To help implementing
 these set of actions, we define the following function constructors:
@@ -147,7 +167,7 @@ using the above defined type classes.
 \subsubsection{Exit action}
 The following data type represents an exit action:
 
-> data ExitAction = Exit
+> data ExitAction = Exit deriving Typeable
 
 It is an action, and running it simply returns an exit request:
 
@@ -158,7 +178,7 @@ It is an action, and running it simply returns an exit request:
 The print action returns a string to the frontend which will be displayed
 to the user:
 
-> data PrintAction = Print String
+> data PrintAction = Print String deriving Typeable
 
 > instance Action PrintAction where
 >     runAction (Print str) = return (ResultString str)
@@ -166,7 +186,7 @@ to the user:
 \subsubsection{Switching between panels}
 The next three functions are responsible for switching between panels:
 
-> data SwitchAction = SwitchL | SwitchR | Toggle
+> data SwitchAction = SwitchL | SwitchR | Toggle deriving Typeable
 
 > instance Action SwitchAction where
 >     runAction SwitchL = do lst <- get
@@ -184,7 +204,7 @@ The next three functions are responsible for switching between panels:
 We can easily get the current directory of the panels. The command is named as
 \emph{print working directory}, to make it more convenient for unix users.
 
-> data PwdAction = Pwd | PwdL | PwdR | PwdLR
+> data PwdAction = Pwd | PwdL | PwdR | PwdLR deriving Typeable
 
 > instance Action PwdAction where
 >     runAction PwdLR = do left <- getLeftPanelState
@@ -203,7 +223,7 @@ We can easily get the current directory of the panels. The command is named as
 Changing the current directory is similar to the previous action (@pwd@), but 
 it also has a parameter:
 
-> data CdAction = Cd FilePath | CdL FilePath | CdR FilePath
+> data CdAction = Cd FilePath | CdL FilePath | CdR FilePath deriving Typeable
 
 > instance Action CdAction where
 >     runAction p = case p of
@@ -222,7 +242,7 @@ it also has a parameter:
 The list command (named @ls@ to be familiar for users) returns the child items (if there is any)
 of the active (or given) panel's current item:
 
-> data LsAction = Ls | LsL | LsR
+> data LsAction = Ls | LsL | LsR deriving Typeable
 
 > instance Action LsAction where
 >     runAction p = case p of
@@ -258,7 +278,7 @@ If the path is relative, it is first looked up in the current directory, then in
 
 > data RunAction = Run String [String]
 >                | RunL String [String]
->                | RunR String [String]
+>                | RunR String [String] deriving Typeable
 
 > instance Action RunAction where
 >     runAction p = case p of
@@ -284,7 +304,7 @@ If the path is relative, it is first looked up in the current directory, then in
 \subsubsection{Add filter action}
 The following action is a simple wrapper around @registerFilter@, to be available for users:
 
-> data AddFilterAction = AddFilter InputFilter
+> data AddFilterAction = AddFilter InputFilter deriving Typeable
 
 > instance Action AddFilterAction where
 >     runAction (AddFilter f) = registerFilter f >> return ResultSuccess
